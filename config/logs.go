@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"github.com/fzxiao233/Vtb_Record/utils"
-	"github.com/knq/sdhook"
 	"github.com/orandin/lumberjackrus"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
@@ -42,7 +41,6 @@ func (hook *WriterHook) Levels() []logrus.Level {
 
 var ConsoleHook *WriterHook
 var FileHook *lumberjackrus.Hook
-var GoogleHook *sdhook.StackdriverHook
 
 // Can't be func init as we need the parsed config
 func InitLog() {
@@ -89,17 +87,6 @@ func InitLog() {
 	}
 
 	logrus.AddHook(FileHook)
-
-	GoogleHook, err = sdhook.New(
-		sdhook.GoogleLoggingAgent(),
-		sdhook.LogName(Config.LogFile),
-		sdhook.Levels(logrus.AllLevels[:logrus.DebugLevel+1]...),
-	)
-	if err != nil {
-		logrus.WithField("prof", true).Warnf("Failed to initialize the sdhook: %v", err)
-	} else {
-		logrus.AddHook(GoogleHook)
-	}
 
 	fs.LogPrint = func(level fs.LogLevel, text string) {
 		logrus.WithField("src", "rclone").Infof(fmt.Sprintf("%-6s: %s", level, text))

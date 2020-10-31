@@ -3,7 +3,6 @@ module github.com/fzxiao233/Vtb_Record
 go 1.13
 
 require (
-	cloud.google.com/go/logging v1.0.0
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/fzxiao233/Go-Emoji-Utils v0.0.0-20200305114615-005e99b02c2f
@@ -17,7 +16,6 @@ require (
 	github.com/orandin/lumberjackrus v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rclone/rclone v1.52.2
-	github.com/recursionpharma/stackrus v0.0.0-20171005194045-12348afda34c
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.6.2
 	github.com/tidwall/gjson v1.6.0
@@ -32,4 +30,3 @@ require (
 )
 
 replace github.com/rclone/rclone v1.52.2 => github.com/NyaMisty/rclone v1.52.2
-replace github.com/smallnest/ringbuffer => ../../smallnest/ringbuffer

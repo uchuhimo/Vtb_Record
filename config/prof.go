@@ -19,7 +19,7 @@ func PrintMemUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	log.WithField("prof", true).Warnf("Alloc = %v MiB\tTotalAlloc = %v MiB\tSys = %v MiB\tGoroutines = %v\tNumGC = %v",
+	log.WithField("prof", true).Debugf("Alloc = %v MiB\tTotalAlloc = %v MiB\tSys = %v MiB\tGoroutines = %v\tNumGC = %v",
 		bToMb(m.Alloc),
 		bToMb(m.TotalAlloc),
 		bToMb(m.Sys),
@@ -36,7 +36,7 @@ func InitProfiling() {
 		for {
 			//go http.ListenAndServe("0.0.0.0:49314", nil)
 			if PprofServer == nil || PprofServer.Addr != Config.PprofHost {
-				logger.Warnf("Starting pprof server")
+				logger.Debugf("Starting pprof server")
 				if PprofServer != nil {
 					go PprofServer.Shutdown(context.Background())
 				}
