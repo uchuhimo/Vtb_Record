@@ -239,7 +239,7 @@ func (p *ProcessVideo) isNewLive() bool {
 }
 
 func (p *ProcessVideo) getFullTitle() string {
-	title := fmt.Sprintf("【%s】", p.liveStartTime.Format("2006-01-02"))
+	title := fmt.Sprintf("[%s]", p.liveStartTime.Format("2006-01-02"))
 	if len(p.TitleHistory) == 0 {
 		p.TitleHistory = append(p.TitleHistory, LiveTitleHistoryEntry{
 			Title:     p.LiveStatus.Video.Title,
@@ -249,7 +249,7 @@ func (p *ProcessVideo) getFullTitle() string {
 	}
 
 	for _, titleHistory := range p.TitleHistory {
-		title += fmt.Sprintf("【%s】%s", titleHistory.StartTime.Format("15:04:05"), titleHistory.Title)
+		title += fmt.Sprintf("[%s]%s", titleHistory.StartTime.Format("15.04.05"), titleHistory.Title)
 	}
 
 	return title
