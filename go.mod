@@ -3,14 +3,9 @@ module github.com/fzxiao233/Vtb_Record
 go 1.14
 
 require (
-	cloud.google.com/go v0.70.0 // indirect
-	github.com/Azure/azure-storage-blob-go v0.10.0 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.5 // indirect
-	github.com/Unknwon/goconfig v0.0.0-20200908083735-df7de6a44db8 // indirect
-	github.com/aws/aws-sdk-go v1.35.19 // indirect
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/etherlabsio/go-m3u8 v0.1.2
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/fzxiao233/Go-Emoji-Utils v0.0.0-20200305114615-005e99b02c2f
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gogf/greuse v1.1.0
@@ -29,18 +24,11 @@ require (
 	github.com/onsi/gomega v1.10.3 // indirect
 	github.com/orandin/lumberjackrus v1.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pelletier/go-toml v1.8.1 // indirect
-	github.com/pkg/sftp v1.12.0 // indirect
-	github.com/prometheus/client_golang v1.8.0 // indirect
-	github.com/rclone/rclone v1.53.2
-	github.com/sirupsen/logrus v1.7.0
-	github.com/smartystreets/assertions v1.2.0 // indirect
-	github.com/spf13/afero v1.4.1 // indirect
-	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/cobra v1.1.1 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/viper v1.7.1
-	github.com/tidwall/gjson v1.6.1
+	github.com/rclone/rclone v1.52.2
+	github.com/sirupsen/logrus v1.6.0
+	github.com/spf13/viper v1.6.2
+	github.com/tidwall/gjson v1.6.0
+	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
@@ -65,3 +53,7 @@ require (
 	storj.io/common v0.0.0-20201030140758-31112c1cc750 // indirect
 	storj.io/uplink v1.3.1 // indirect
 )
+
+replace github.com/rclone/rclone v1.52.2 => github.com/NyaMisty/rclone v1.52.2-mod
+
+//replace github.com/smallnest/ringbuffer => ../../smallnest/ringbuffer

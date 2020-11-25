@@ -3,16 +3,18 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"flag"
 	"fmt"
 	"github.com/fzxiao233/Vtb_Record/config"
 	"github.com/fzxiao233/Vtb_Record/live"
 	"github.com/fzxiao233/Vtb_Record/live/monitor"
+	"github.com/fzxiao233/Vtb_Record/live/plugins"
+	"github.com/fzxiao233/Vtb_Record/live/videoworker"
 	"github.com/fzxiao233/Vtb_Record/utils"
 	"github.com/rclone/rclone/fs"
 	rconfig "github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/operations"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
@@ -28,8 +30,15 @@ import (
 
 var SafeStop bool
 
+func initPluginManager() videoworker.PluginManager {
+	pm := videoworker.PluginManager{}
+	pm.AddPlugin(&plugins.PluginCQBot{})
+	return pm
+}
+
 func arrangeTask() {
 	log.Printf("Arrange tasks...")
+	pm := initPluginManager()
 	status := make([]map[string]bool, len(config.Config.Module))
 	for i, module := range config.Config.Module {
 		status[i] = make(map[string]bool, len(module.Users))
@@ -74,6 +83,7 @@ func arrangeTask() {
 	for _, dir := range config.Config.DownloadDir {
 		utils.MakeDir(dir)
 	}
+
 	var statusMx sync.Mutex
 	for {
 		var mods []config.ModuleConfig
@@ -95,7 +105,7 @@ func arrangeTask() {
 					statusMx.Unlock()
 					changed = append(changed, identifier)
 					go func(i int, j string, mon monitor.VideoMonitor, userCon config.UsersConfig) {
-						live.StartMonitor(mon, userCon)
+						live.StartMonitor(mon, userCon, pm)
 						statusMx.Lock()
 						status[i][j] = false
 						statusMx.Unlock()
@@ -141,20 +151,19 @@ func arrangeTask() {
 func handleInterrupt() {
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	//go func() {
-	//	<-c
-	//	log.Warnf("Ctrl+C pressed in Terminal!")
-	//	operations.RcatFiles.Range(func(key, value interface{}) bool {
-	//		fn := key.(string)
-	//		log.Infof("Closing opened file: %s", fn)
-	//		in := value.(io.ReadCloser)
-	//		in.Close()
-	//		return true
-	//	})
-	//	time.Sleep(20 * time.Second) // wait rclone upload finish..
-	//	os.Exit(0)
-	//}()
-	//os.Exit(0)
+	go func() {
+		<-c
+		log.Warnf("Ctrl+C pressed in Terminal!")
+		operations.RcatFiles.Range(func(key, value interface{}) bool {
+			fn := key.(string)
+			log.Infof("Closing opened file: %s", fn)
+			in := value.(io.ReadCloser)
+			in.Close()
+			return true
+		})
+		time.Sleep(20 * time.Second) // wait rclone upload finish..
+		os.Exit(0)
+	}()
 }
 
 func handleUpdate() {
@@ -198,23 +207,34 @@ func main() {
 				addrs := []string{"private.googleapis.com:443", "www.googleapis.com:443"}
 				addr = addrs[rand.Intn(len(addrs))]
 			}*/
-			isNumber := false
+			needLB := true // do we need to load balance? we do it in a opt-out fashion
 			if _, err := strconv.Atoi(addr[0:1]); err == nil {
-				isNumber = true
+				// is it an IP Address?
+				needLB = false
 			}
-			if !isNumber && config.Config.OutboundAddrs != nil && len(config.Config.OutboundAddrs) > 0 {
-				outIp := utils.RandChooseStr(config.Config.OutboundAddrs)
-				return (&net.Dialer{
-					Timeout:   30 * time.Second,
-					KeepAlive: 30 * time.Second,
-					LocalAddr: &net.TCPAddr{
-						IP:   net.ParseIP(outIp),
-						Port: 0,
-					},
-				}).DialContext(ctx, network, addr)
-			} else {
-				return net.Dial(network, addr)
+			if config.Config.OutboundAddrs != nil && len(config.Config.OutboundAddrs) > 0 {
+				var outIp string
+
+				if addr == "STICKY_IP" {
+					outIp = config.Config.OutboundAddrs[0]
+					addr = _addr // revert to original ip
+				} else if needLB {
+					outIp = utils.RandChooseStr(config.Config.OutboundAddrs)
+				} else {
+					outIp = ""
+				}
+				if outIp != "" {
+					return (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 30 * time.Second,
+						LocalAddr: &net.TCPAddr{
+							IP:   net.ParseIP(outIp),
+							Port: 0,
+						},
+					}).DialContext(ctx, network, addr)
+				}
 			}
+			return net.Dial(network, addr)
 		},
 	}
 
@@ -295,10 +315,14 @@ func main() {
 	fs.Config.TPSLimit = 0
 	fs.Config.LowLevelRetries = 120
 	//fs.Config.NoGzip = false
-	confPath := flag.String("config", "config.json", "config.json location")
-	flag.Parse()
-	viper.SetConfigFile(*confPath)
-	config.InitConfig()
+
+	// moved to config package
+	//confPath := flag.String("config", "config.json", "config.json location")
+	//flag.Parse()
+	//viper.SetConfigFile(*confPath)
+	//config.InitConfig()
+	config.PrepareConfig()
+
 	config.InitLog()
 	go config.InitProfiling()
 	arrangeTask()
