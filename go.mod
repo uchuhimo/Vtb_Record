@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/etherlabsio/go-m3u8 v0.1.2
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fzxiao233/Go-Emoji-Utils v0.0.0-20200305114615-005e99b02c2f
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gogf/greuse v1.1.0
