@@ -63,6 +63,7 @@ type MainConfig struct {
 	//RedisHost        string
 	//ExpressPort      string
 	DanmuPort    string
+	EnableDanmu  bool
 	EnableTS2MP4 bool
 }
 

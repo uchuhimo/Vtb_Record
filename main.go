@@ -28,16 +28,18 @@ import (
 
 var SafeStop bool
 
-func initPluginManager() videoworker.PluginManager {
+func initPluginManager(config *config.MainConfig) videoworker.PluginManager {
 	pm := videoworker.PluginManager{}
 	pm.AddPlugin(&plugins.PluginCQBot{})
-	// pm.AddPlugin(&plugins.PluginDanmuRecorder{})
+	if config.EnableDanmu {
+		pm.AddPlugin(&plugins.PluginDanmuRecorder{})
+	}
 	return pm
 }
 
 func arrangeTask() {
 	log.Printf("Arrange tasks...")
-	pm := initPluginManager()
+	pm := initPluginManager(config.Config)
 	status := make([]map[string]bool, len(config.Config.Module))
 	for i, module := range config.Config.Module {
 		status[i] = make(map[string]bool, len(module.Users))
