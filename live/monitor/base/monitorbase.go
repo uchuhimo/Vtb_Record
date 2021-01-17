@@ -16,8 +16,12 @@ type LiveInfo struct {
 }
 
 type MonitorCtx struct {
-	Client         *http.Client
-	ExtraModConfig map[string]interface{}
+	Client           *http.Client
+	UseFollowPolling bool
+	ApiHostUrl       string
+	EnableProxy      bool
+	Proxy            string
+	Cookie           string
 }
 
 // HttpGet wraps the raw HttpGet with monitor's global header
@@ -48,19 +52,16 @@ type HeadersConfig struct {
 }
 
 func (c *MonitorCtx) GetHeaders() map[string]string {
-	headerConfig := HeadersConfig{}
-	_ = utils.MapToStruct(c.ExtraModConfig, &headerConfig)
+	headerConfig := HeadersConfig{
+		HttpHeaders: map[string]string{"Cookie": c.Cookie},
+	}
 	return headerConfig.HttpHeaders
 }
 
 func (c *MonitorCtx) GetProxy() (string, bool) {
-	enableProxy, ok1 := c.ExtraModConfig["EnableProxy"]
-	proxy, ok2 := c.ExtraModConfig["Proxy"]
-	if ok1 && ok2 && enableProxy == true {
-		return proxy.(string), true
-	} else {
-		return "", false
-	}
+	enableProxy := c.EnableProxy
+	proxy := c.Proxy
+	return proxy, enableProxy
 }
 
 type VideoMonitor interface {
@@ -92,7 +93,13 @@ func (b *BaseMonitor) DownloadProvider() string {
 
 // monitorCtx contains mod's extraConfig and its own http client
 func CreateMonitorCtx(module config.ModuleConfig) MonitorCtx {
-	ctx := MonitorCtx{ExtraModConfig: module.ExtraConfig}
+	ctx := MonitorCtx{
+		UseFollowPolling: module.UseFollowPolling,
+		ApiHostUrl:       module.ApiHostUrl,
+		EnableProxy:      module.EnableProxy,
+		Proxy:            module.Proxy,
+		Cookie:           module.Cookie,
+	}
 	var client *http.Client
 	proxy, ok := ctx.GetProxy()
 	if ok && proxy != "" {

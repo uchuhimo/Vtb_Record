@@ -757,7 +757,7 @@ func (d *HLSDownloader) startDownload() error {
 	d.altdownloadErr = cache.New(30*time.Second, 5*time.Minute)
 
 	d.hasAlt = false
-	if _, ok := d.Video.UsersConfig.ExtraConfig["AltStreamLinkArgs"]; ok {
+	if len(d.Video.UsersConfig.AltStreamLinkArgs) != 0 {
 		d.hasAlt = true
 	}
 
@@ -847,11 +847,9 @@ func (dd *DownloaderGo) doDownloadHls(entry *log.Entry, output string, video *in
 		},
 	}
 
-	_altproxy, ok := video.UsersConfig.ExtraConfig["AltProxy"]
-	var altproxy string
+	altproxy := video.UsersConfig.AltProxy
 	var altclients []*http.Client
-	if ok {
-		altproxy = _altproxy.(string)
+	if altproxy != "" {
 		proxyUrl, _ := url.Parse("socks5://" + altproxy)
 		altclients = []*http.Client{
 			{

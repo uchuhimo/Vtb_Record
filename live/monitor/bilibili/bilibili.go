@@ -36,11 +36,8 @@ func (b *BilibiliPoller) getStatusUseFollow() error {
 		return nil
 	}
 
-	_url, ok := ctx.ExtraModConfig["ApiHostUrl"]
-	var url string
-	if ok {
-		url = _url.(string)
-	} else {
+	url := ctx.ApiHostUrl
+	if url == "" {
 		url = "https://api.live.bilibili.com"
 	}
 
@@ -110,11 +107,8 @@ func (b *BilibiliPoller) getStatusUseFollow() error {
 
 func (b *BilibiliPoller) getStatusUseBatch() error {
 	ctx := base.GetCtx("Bilibili")
-	_url, ok := ctx.ExtraModConfig["ApiHostUrl"]
-	var url string
-	if ok {
-		url = _url.(string)
-	} else {
+	url := ctx.ApiHostUrl
+	if url == "" {
 		url = "https://api.live.bilibili.com"
 	}
 
@@ -164,10 +158,10 @@ func (b *BilibiliPoller) StartPoll() error {
 	go func() {
 		for {
 			biliMod := base.GetMod("Bilibili")
-			_interval, ok := biliMod.ExtraConfig["PollInterval"]
+			_interval := biliMod.PollInterval
 			interval := time.Duration(config.Config.CriticalCheckSec) * time.Second
-			if ok {
-				interval = time.Duration(_interval.(float64)) * time.Second
+			if _interval != 0 {
+				interval = time.Duration(_interval) * time.Second
 			}
 			time.Sleep(interval)
 			err := b.GetStatus()
@@ -213,11 +207,8 @@ func (b *Bilibili) getVideoInfoByPoll() error {
 }
 
 func (b *Bilibili) getVideoInfoByRoom() error {
-	_url, ok := b.Ctx.ExtraModConfig["ApiHostUrl"]
-	var url string
-	if ok {
-		url = _url.(string)
-	} else {
+	url := b.Ctx.ApiHostUrl
+	if url == "" {
 		url = "https://api.live.bilibili.com"
 	}
 	rawInfoJSON, err := b.Ctx.HttpGet(url+"/room/v1/Room/getRoomInfoOld?mid="+b.TargetId, map[string]string{})
@@ -245,9 +236,8 @@ func (b *Bilibili) CreateVideo(usersConfig config.UsersConfig) *interfaces.Video
 
 func (b *Bilibili) CheckLive(usersConfig config.UsersConfig) bool {
 	b.TargetId = usersConfig.TargetId
-	ret, ok := b.Ctx.ExtraModConfig["UseFollowPolling"]
 	var err error
-	if ok && ret.(bool) {
+	if b.Ctx.UseFollowPolling {
 		err = b.getVideoInfoByPoll()
 	} else {
 		err = b.getVideoInfoByRoom()

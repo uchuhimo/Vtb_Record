@@ -31,6 +31,7 @@ var SafeStop bool
 func initPluginManager() videoworker.PluginManager {
 	pm := videoworker.PluginManager{}
 	pm.AddPlugin(&plugins.PluginCQBot{})
+	// pm.AddPlugin(&plugins.PluginDanmuRecorder{})
 	return pm
 }
 

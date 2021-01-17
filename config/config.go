@@ -4,27 +4,33 @@ import (
 	"flag"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"github.com/mitchellh/mapstructure"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"log"
 	"os"
-	"reflect"
-	"strings"
 )
 
 var Config *MainConfig
 var ConfigChanged bool
 
+type CQJsonConfig struct {
+	NeedCQBot bool
+	QQGroupID []int
+	CQHost    string
+	CQToken   string
+}
 type UsersConfig struct {
-	TargetId     string
-	Name         string
-	DownloadDir  string
-	NeedDownload bool
-	TransBiliId  string
-	UserHeaders  map[string]string
-	ExtraConfig  map[string]interface{}
+	TargetId          string
+	Name              string
+	DownloadDir       string
+	NeedDownload      bool
+	TransBiliId       string
+	UserHeaders       map[string]string
+	StreamLinkArgs    []string
+	AltStreamLinkArgs []string
+	AltProxy          string
+	CQConfig          CQJsonConfig
 }
 type ModuleConfig struct {
 	//EnableProxy     bool
@@ -33,7 +39,12 @@ type ModuleConfig struct {
 	Enable           bool
 	Users            []UsersConfig
 	DownloadProvider string
-	ExtraConfig      map[string]interface{}
+	UseFollowPolling bool
+	ApiHostUrl       string
+	EnableProxy      bool
+	Proxy            string
+	Cookie           string
+	PollInterval     int
 }
 type MainConfig struct {
 	CriticalCheckSec int
@@ -51,8 +62,8 @@ type MainConfig struct {
 	DomainRewrite map[string]([]string)
 	//RedisHost        string
 	//ExpressPort      string
+	DanmuPort    string
 	EnableTS2MP4 bool
-	ExtraConfig  map[string]interface{}
 }
 
 var v *viper.Viper
@@ -96,30 +107,7 @@ func ReloadConfig() (bool, error) {
 		return true, err
 	}
 	config := &MainConfig{}
-	mdMap := make(map[string]*mapstructure.Metadata, 10)
-	mdMap[""] = &mapstructure.Metadata{}
-	err = v.Unmarshal(config, func(c *mapstructure.DecoderConfig) {
-		c.DecodeHook = mapstructure.ComposeDecodeHookFunc(
-			func(inType reflect.Type, outType reflect.Type, input interface{}) (interface{}, error) {
-				if inType.Kind() == reflect.Map && outType.Kind() == reflect.Struct { // we'll decoding a struct
-					fieldsMap := make(map[string]reflect.StructField, 10)
-					for i := 0; i < outType.NumField(); i++ {
-						fieldsMap[strings.ToLower(outType.Field(i).Name)] = outType.Field(i)
-					}
-					inputMap := input.(map[string]interface{})
-					extraConfig := make(map[string]interface{}, 5)
-					inputMap["ExtraConfig"] = extraConfig
-					for key := range inputMap {
-						_, ok := fieldsMap[strings.ToLower(key)]
-						if !ok {
-							extraConfig[key] = inputMap[key]
-						}
-					}
-				}
-				return input, nil
-			},
-			c.DecodeHook)
-	})
+	err = v.Unmarshal(config)
 	if err != nil {
 		fmt.Printf("Struct config error: %s", err)
 	}

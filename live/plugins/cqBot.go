@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/fzxiao233/Vtb_Record/live/interfaces"
 	"github.com/fzxiao233/Vtb_Record/live/videoworker"
-	"github.com/fzxiao233/Vtb_Record/utils"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -41,28 +40,12 @@ func CreateLiveMsg(v *interfaces.VideoInfo) string {
 	return "[直播提示]" + "[" + v.Provider + "]" + v.Title + "正在直播" + "链接: " + v.Target + " [CQ:at,qq=all]"
 }
 
-type CQJsonConfig struct {
-	NeedCQBot bool
-	QQGroupID []int
-	CQHost    string
-	CQToken   string
-}
-
 func (p *PluginCQBot) LiveStart(process *videoworker.ProcessVideo) error {
 	if p.sentMsg == nil {
 		p.sentMsg = make(map[string]map[int]int)
 	}
 	video := process.LiveStatus.Video
-	config := CQJsonConfig{}
-	cqConfig, ok := video.UsersConfig.ExtraConfig["CQConfig"]
-	if !ok {
-		return nil
-	}
-	err := utils.MapToStruct(cqConfig.(map[string]interface{}), &config)
-	if err != nil {
-		return err
-	}
-
+	config := video.UsersConfig.CQConfig
 	if !config.NeedCQBot {
 		log.Tracef(video.UsersConfig.Name + " needn't cq")
 		return nil
@@ -74,6 +57,7 @@ func (p *PluginCQBot) LiveStart(process *videoworker.ProcessVideo) error {
 		CQHost:  config.CQHost,
 		CQToken: config.CQToken,
 	}
+	var ok bool
 	for _, GroupId := range config.QQGroupID {
 		sentGroupIds := p.sentMsg[msg]
 		if sentGroupIds == nil {

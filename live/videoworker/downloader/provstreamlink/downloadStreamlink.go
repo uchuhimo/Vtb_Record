@@ -22,13 +22,7 @@ type DownloaderStreamlink struct {
 }
 
 func (d *DownloaderStreamlink) StartDownload(video *interfaces.VideoInfo, proxy string, cookie string, filepath string) error {
-	_arg, ok := video.UsersConfig.ExtraConfig["StreamLinkArgs"]
-	arg := []string{}
-	if ok {
-		for _, a := range _arg.([]interface{}) {
-			arg = append(arg, a.(string))
-		}
-	}
+	arg := video.UsersConfig.StreamLinkArgs
 	//arg = append(arg, []string{"--force", "-o", filepath}...)
 	if proxy != "" {
 		arg = addStreamlinkProxy(arg, proxy)

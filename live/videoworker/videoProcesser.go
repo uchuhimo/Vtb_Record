@@ -177,9 +177,8 @@ func (p *ProcessVideo) startDownloadVideo() {
 	logger.Info("Do postprocessing...")
 	videoName := p.postProcessing()
 	if videoName != "" {
-		//video := p.LiveStatus.Video
-		//video.FileName = videoName
-		//video.FilePath = video.UsersConfig.DownloadDir + "/" + video.FileName
+		video := p.LiveStatus.Video
+		video.FilePath = videoName
 	}
 	p.finish <- 1
 }
@@ -238,7 +237,7 @@ func (p *ProcessVideo) isNewLive() bool {
 	}
 }
 
-func (p *ProcessVideo) getFullTitle() string {
+func (p *ProcessVideo) GetFullTitle() string {
 	title := fmt.Sprintf("[%s]", p.liveStartTime.Format("2006-01-02"))
 	if len(p.TitleHistory) == 0 {
 		p.TitleHistory = append(p.TitleHistory, LiveTitleHistoryEntry{
@@ -268,7 +267,7 @@ func (p *ProcessVideo) postProcessing() string {
 		return p.convertToMp4(dirpath)
 	} else {
 		dirpath += "/"
-		dirpath += p.getFullTitle()
+		dirpath += p.GetFullTitle()
 		//err := os.Rename(p.LiveStatus.Video.UsersConfig.DownloadDir, dirpath)
 
 		doMove := func(src string, dst string, quiet bool) string {
@@ -303,7 +302,7 @@ func (p *ProcessVideo) postProcessing() string {
 func (p *ProcessVideo) convertToMp4(dirpath string) string {
 	//livetime := p.liveStartTime.Format("2006-01-02 15:04:05")
 	//title := fmt.Sprintf("【%s】", livetime) + p.LiveStatus.Video.Title
-	title := p.getFullTitle()
+	title := p.GetFullTitle()
 	var videoName string
 	if len(p.videoPathList) == 0 {
 		log.Warnf("videoPathList is empty!!!! full info: %v", p)

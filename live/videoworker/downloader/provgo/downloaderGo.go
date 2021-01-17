@@ -47,18 +47,11 @@ func updateInfo(video *interfaces.VideoInfo, proxy string, cookie string, isAlt 
 	needAbort = false
 	rl.Take()
 	logger := log.WithField("video", video).WithField("alt", isAlt)
-	var conf string
+	var arg []string
 	if isAlt {
-		conf = "AltStreamLinkArgs"
+		arg = video.UsersConfig.AltStreamLinkArgs
 	} else {
-		conf = "StreamLinkArgs"
-	}
-	_arg, ok := video.UsersConfig.ExtraConfig[conf]
-	arg := []string{}
-	if ok {
-		for _, a := range _arg.([]interface{}) {
-			arg = append(arg, a.(string))
-		}
+		arg = video.UsersConfig.StreamLinkArgs
 	}
 	arg = append(arg, []string{"--json"}...)
 	if proxy != "" {
