@@ -155,7 +155,7 @@ func UpdateLogLevel() {
 }
 
 func PrepareConfig() {
-	confPath := flag.String("config", "config.json", "config.json location")
+	confPath := flag.String("config", "config.yaml", "config.yaml location")
 	flag.Parse()
 	viper.SetConfigFile(*confPath)
 	InitConfig()
