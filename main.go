@@ -102,7 +102,7 @@ func arrangeTask() {
 				}
 			}
 		}
-		log.Infof("current living %s", living)
+		log.Debugf("current living %s", living)
 		log.Tracef("checked %s", changed)
 		if time.Now().Minute() > 55 || time.Now().Minute() < 5 || (time.Now().Minute() > 25 && time.Now().Minute() < 35) {
 			time.Sleep(time.Duration(config.Config.CriticalCheckSec) * time.Second)
