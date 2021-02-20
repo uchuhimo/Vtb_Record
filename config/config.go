@@ -62,6 +62,7 @@ type MainConfig struct {
 	DomainRewrite map[string]([]string)
 	//RedisHost        string
 	//ExpressPort      string
+	DanmuHost     string
 	DanmuPort    string
 	EnableDanmu  bool
 	EnableTS2MP4 bool

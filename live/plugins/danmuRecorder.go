@@ -15,11 +15,15 @@ import (
 
 func callJsAPI(roomID string, status string, filename string) error {
 	var err error
+	host := "http://127.0.0.1"
 	port := "3000"
+	if config.Config.DanmuHost != "" {
+		host = config.Config.DanmuHost
+	}
 	if config.Config.DanmuPort != "" {
 		port = config.Config.DanmuPort
 	}
-	_, err = utils.HttpGet(nil, "http://127.0.0.1:"+port+"/api/live?roomID="+roomID+"&status="+status+"&filename="+url.QueryEscape(filename), map[string]string{})
+	_, err = utils.HttpGet(nil, host+":"+port+"/api/live?roomID="+roomID+"&status="+status+"&filename="+url.QueryEscape(filename), map[string]string{})
 	if err != nil {
 		err = fmt.Errorf("call danmaku error %v", err)
 		log.Warn(err)
