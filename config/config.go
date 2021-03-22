@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"log"
@@ -25,8 +24,6 @@ type UsersConfig struct {
 	Name              string
 	DownloadDir       string
 	NeedDownload      bool
-	TransBiliId       string
-	UserHeaders       map[string]string
 	StreamLinkArgs    []string
 	AltStreamLinkArgs []string
 	AltProxy          string
@@ -57,11 +54,6 @@ type MainConfig struct {
 	DownloadDir      []string
 	UploadDir        string
 	Module           []ModuleConfig
-	//PprofHost        string
-	//OutboundAddrs    []string
-	DomainRewrite map[string]([]string)
-	//RedisHost        string
-	//ExpressPort      string
 	DanmuHost     string
 	DanmuPort    string
 	EnableDanmu  bool
@@ -113,10 +105,6 @@ func ReloadConfig() (bool, error) {
 	if err != nil {
 		fmt.Printf("Struct config error: %s", err)
 	}
-	/*modules := viper.AllSettings()["module"].([]interface{})
-	for i := 0; i < len(modules); i++ {
-		Config.Module[i].ExtraConfig = modules[i].(map[string]interface{})
-	}*/
 	Config = config
 	UpdateLogLevel()
 	return true, nil
@@ -137,18 +125,6 @@ func LevelStrParse(levelStr string) (level logrus.Level) {
 }
 
 func UpdateLogLevel() {
-	fs.Config.LogLevel = fs.LogLevelInfo
-	if Config.RLogLevel == "debug" {
-		fs.Config.LogLevel = fs.LogLevelDebug
-	} else if Config.RLogLevel == "info" {
-		fs.Config.LogLevel = fs.LogLevelInfo
-	} else if Config.RLogLevel == "warn" {
-		fs.Config.LogLevel = fs.LogLevelWarning
-	} else if Config.RLogLevel == "error" {
-		fs.Config.LogLevel = fs.LogLevelError
-	}
-	logrus.Printf("Set rclone logrus level to %s", fs.Config.LogLevel)
-
 	if ConsoleHook != nil {
 		level := LevelStrParse(Config.LogLevel)
 		ConsoleHook.LogLevel = level

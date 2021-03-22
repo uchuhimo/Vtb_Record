@@ -91,9 +91,5 @@ func InitLog() {
 
 	logrus.AddHook(FileHook)
 
-	//fs.LogPrint = func(level fs.LogLevel, text string) {
-	//	logrus.WithField("src", "rclone").Infof(fmt.Sprintf("%-6s: %s", level, text))
-	//}
-
 	UpdateLogLevel()
 }
