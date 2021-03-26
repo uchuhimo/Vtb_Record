@@ -179,7 +179,7 @@ func (p *ProcessVideo) startDownloadVideo() {
 	if videoName != "" {
 		video := p.LiveStatus.Video
 		video.FileName = videoName
-		video.FilePath = video.UsersConfig.DownloadDir + "/" + video.FileName
+		video.FilePath = video.FileName
 	}
 	p.finish <- 1
 }
