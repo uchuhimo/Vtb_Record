@@ -38,17 +38,29 @@ func getRoomId(targetId string) string {
 	var err error = nil
 	for {
 		resp, err = utils.HttpGet(nil, "https://api.vtbs.moe/v1/detail/"+targetId, map[string]string{})
-		if err != nil {
-			log.Errorf("cannot get roomid %v", err)
-			continue
-		}
-		respJson, err := simplejson.NewJson(resp)
-		if err != nil {
-			log.Errorf("%s parse json error", targetId)
-		}
-		if respJson != nil {
-			roomId := strconv.Itoa(respJson.Get("roomid").MustInt())
-			return roomId
+		if err == nil {
+			respJson, err := simplejson.NewJson(resp)
+			if err != nil {
+				log.Errorf("%s parse json error", targetId)
+			}
+			if respJson != nil {
+				roomId := strconv.Itoa(respJson.Get("roomid").MustInt())
+				return roomId
+			}
+		} else {
+			resp, err = utils.HttpGet(nil, "https://api.live.bilibili.com/live_user/v1/Master/info?uid="+targetId, map[string]string{})
+			if err != nil {
+				log.Errorf("cannot get roomid %v", err)
+				continue
+			}
+			respJson, err := simplejson.NewJson(resp)
+			if err != nil {
+				log.Errorf("%s parse json error", targetId)
+			}
+			if respJson != nil {
+				roomId := strconv.Itoa(respJson.Get("data").Get("room_id").MustInt())
+				return roomId
+			}
 		}
 	}
 }
