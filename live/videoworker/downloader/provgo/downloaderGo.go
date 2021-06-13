@@ -133,10 +133,11 @@ func (d *DownloaderGo) StartDownload(video *interfaces.VideoInfo, proxy string, 
 	var needAbort bool
 	for i := 0; i < 6; i++ {
 		if i < 3 {
-			needAbort, err, infoJson = updateInfo(video, proxy, cookie, false)
-		} else {
 			d.useAlt = true
 			needAbort, err, infoJson = updateInfo(video, proxy, cookie, true)
+		} else {
+			d.useAlt = false
+			needAbort, err, infoJson = updateInfo(video, proxy, cookie, false)
 		}
 		if needAbort {
 			// if we didn't entered live
