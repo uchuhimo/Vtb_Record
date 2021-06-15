@@ -54,10 +54,10 @@ type MainConfig struct {
 	DownloadDir      []string
 	UploadDir        string
 	Module           []ModuleConfig
-	DanmuHost     string
-	DanmuPort    string
-	EnableDanmu  bool
-	EnableTS2MP4 bool
+	DanmuHost        string
+	DanmuPort        string
+	EnableDanmu      bool
+	EnableTS2MP4     bool
 }
 
 var v *viper.Viper

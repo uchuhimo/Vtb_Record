@@ -43,7 +43,7 @@ func init() {
 
 var StreamlinkSemaphore = semaphore.NewWeighted(3)
 
-func updateInfo(video *interfaces.VideoInfo, proxy string, cookie string, isAlt bool) (needAbort bool, err error, infoJson *simplejson.Json) {
+func updateInfo(video *interfaces.VideoInfo, proxy string, cookie string, isAlt bool) (needAbort bool, infoJson *simplejson.Json, err error) {
 	needAbort = false
 	rl.Take()
 	logger := log.WithField("video", video).WithField("alt", isAlt)
@@ -71,7 +71,7 @@ func updateInfo(video *interfaces.VideoInfo, proxy string, cookie string, isAlt 
 	arg = append(arg, video.Target, config.Config.DownloadQuality)
 	logger.Infof("start to query, command %s", arg)
 	StreamlinkSemaphore.Acquire(context.Background(), 1)
-	ret, stderr := utils.ExecShellEx(logger, false, "streamlink", arg...)
+	ret, stderr := utils.ExecShell("streamlink", arg...)
 	StreamlinkSemaphore.Release(1)
 	if stderr != "" {
 		logger.Infof("Streamlink err output: %s", stderr)
@@ -107,13 +107,13 @@ func updateInfo(video *interfaces.VideoInfo, proxy string, cookie string, isAlt 
 func parseHttpJson(infoJson *simplejson.Json) (string, map[string]string, error) {
 	jret := infoJson.Get("url")
 	if jret == nil {
-		return "", nil, fmt.Errorf("Not a good json ret: no url")
+		return "", nil, fmt.Errorf("not a good json ret: no url")
 	}
 	url := jret.MustString()
 	headers := make(map[string]string)
 	jret = infoJson.Get("headers")
 	if jret == nil {
-		return "", nil, fmt.Errorf("Not a good json ret: no headers")
+		return "", nil, fmt.Errorf("not a good json ret: no headers")
 	}
 	for k, v := range jret.MustMap() {
 		headers[k] = v.(string)
@@ -133,10 +133,10 @@ func (d *DownloaderGo) StartDownload(video *interfaces.VideoInfo, proxy string, 
 	var needAbort bool
 	for i := 0; i < 6; i++ {
 		if i < 3 {
-			needAbort, err, infoJson = updateInfo(video, proxy, cookie, false)
+			needAbort, infoJson, err = updateInfo(video, proxy, cookie, false)
 		} else {
 			d.useAlt = true
-			needAbort, err, infoJson = updateInfo(video, proxy, cookie, true)
+			needAbort, infoJson, err = updateInfo(video, proxy, cookie, true)
 		}
 		if needAbort {
 			// if we didn't entered live
@@ -147,11 +147,11 @@ func (d *DownloaderGo) StartDownload(video *interfaces.VideoInfo, proxy string, 
 			err = func() error {
 				jret := infoJson.Get("type")
 				if jret == nil {
-					return fmt.Errorf("Not a good json ret: no type")
+					return fmt.Errorf("not a good json ret: no type")
 				}
 				streamtype = jret.MustString()
 				if streamtype == "" {
-					return fmt.Errorf("Not a good json ret: %s", infoJson)
+					return fmt.Errorf("not a good json ret: %s", infoJson)
 				}
 				return nil
 			}()
@@ -179,7 +179,7 @@ func (d *DownloaderGo) StartDownload(video *interfaces.VideoInfo, proxy string, 
 					return d.doDownloadHls(logger, filepath, video, url, headers, needMove)
 				}
 			} else {
-				return fmt.Errorf("Unknown stream type: %s", streamtype)
+				return fmt.Errorf("unknown stream type: %s", streamtype)
 			}
 		} else {
 			logger.WithField("alt", d.useAlt).Infof("Failed to query m3u8 url, err: %s", err)

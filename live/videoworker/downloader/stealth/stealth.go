@@ -21,7 +21,7 @@ func (u *BilibiliRewriter) Rewrite(url string) (newUrl string, useMain, useAlt i
 		useAlt = 0
 	} else if strings.Contains(url, "gotcha103") {
 		newUrl = strings.Replace(url, "https://d1--cn-gotcha103.bilivideo.com", "http://shnode.misty.moe:49980", 1)
-		newUrl = strings.Replace(url, "http://d1--cn-gotcha103.bilivideo.com", "http://shnode.misty.moe:49980", 1)
+		newUrl = strings.Replace(newUrl, "http://d1--cn-gotcha103.bilivideo.com", "http://shnode.misty.moe:49980", 1)
 		useAlt = 0
 	} else if strings.Contains(url, "gotcha104") {
 		if u.needTxyunRewrite {

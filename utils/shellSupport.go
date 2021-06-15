@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-func ExecShell(name string, arg ...string) string {
+func ExecShell(name string, arg ...string) (string, string) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	co := exec.Command(name, arg...)
 	stdoutIn, _ := co.StdoutPipe()
@@ -30,7 +30,7 @@ func ExecShell(name string, arg ...string) string {
 		log.Printf("%v", errStdout)
 	}
 	_ = co.Wait()
-	outStr, errStr := string(stdoutBuf.Bytes()), string(stderrBuf.Bytes())
+	outStr, errStr := stdoutBuf.String(), stderrBuf.String()
 	//println(outStr + errStr)
-	return outStr + errStr
+	return outStr, errStr
 }

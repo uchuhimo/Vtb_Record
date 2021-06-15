@@ -11,7 +11,6 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
-	"github.com/valyala/bytebufferpool"
 	"go.uber.org/ratelimit"
 	"io"
 	"math/rand"
@@ -76,8 +75,6 @@ type HLSDownloader struct {
 	altSegErr sync.Map
 }
 
-var bufPool bytebufferpool.Pool
-
 var IsStub = false
 
 // download each segment
@@ -117,7 +114,7 @@ func (d *HLSDownloader) handleSegment(segData *HLSSegment) bool {
 				}()
 			}
 		} else {
-			usedTime := time.Now().Sub(s)
+			usedTime := time.Since(s)
 			if usedTime > time.Second*15 {
 				// we used too much time to download a segment
 				logger.Infof("Download %d used %s", segData.SegNo, usedTime)
@@ -187,7 +184,7 @@ breakout:
 			logger.Warnf("Failed all-clients to download segment %d", segData.SegNo)
 			round++
 		}
-		if time.Now().Sub(segData.SegArriveTime) > 300*time.Second {
+		if time.Since(segData.SegArriveTime) > 300*time.Second {
 			logger.Warnf("Failed to download segment %d within timeout...", segData.SegNo)
 			return false
 		}
@@ -285,9 +282,7 @@ func (d *HLSDownloader) forceRefresh(isAlt bool) {
 		recover()
 	}()
 	ch := d.forceRefreshChan
-	if !isAlt {
-		ch = d.forceRefreshChan
-	} else {
+	if isAlt {
 		ch = d.altforceRefreshChan
 	}
 	if ch == nil {
@@ -317,25 +312,6 @@ func (d *HLSDownloader) getHLSUrl(isAlt bool) (curUrl string, curHeader map[stri
 		d.AltUrlUpdating.Lock()
 		curUrl = d.AltHLSUrl
 		curHeader = d.AltHLSHeader
-		d.AltUrlUpdating.Unlock()
-	}
-	return
-}
-
-func (d *HLSDownloader) setHLSUrl(isAlt bool, curUrl string, curHeader map[string]string) {
-	if !isAlt {
-		d.UrlUpdating.Lock()
-		d.HLSUrl = curUrl
-		if curHeader != nil {
-			d.HLSHeader = curHeader
-		}
-		d.UrlUpdating.Unlock()
-	} else {
-		d.AltUrlUpdating.Lock()
-		d.AltHLSUrl = curUrl
-		if curHeader != nil {
-			d.AltHLSHeader = curHeader
-		}
 		d.AltUrlUpdating.Unlock()
 	}
 	return
@@ -404,9 +380,7 @@ func (d *HLSDownloader) m3u8Handler(isAlt bool, parser M3u8ParserCallback) error
 	doQuery := func(client *http.Client) {
 		m3u8CurUrl := curUrl
 		for {
-			if _, ok := curHeader["Accept-Encoding"]; ok { // if there's custom Accept-Encoding, http.Client won't process them for us
-				delete(curHeader, "Accept-Encoding")
-			}
+			delete(curHeader, "Accept-Encoding") // if there's custom Accept-Encoding, http.Client won't process them for us
 			_m3u8, err := utils.HttpGet(client, m3u8CurUrl, curHeader)
 			if err != nil {
 				d.M3U8UrlRewriter.Callback(m3u8CurUrl, err)
@@ -494,7 +468,7 @@ breakout:
 			retchan = nil
 			if ret == nil {
 				//logger.Info("Unrecoverable m3u8 download err, aborting")
-				return fmt.Errorf("Unrecoverable m3u8 download err, aborting, url: %s", curUrl)
+				return fmt.Errorf("unrecoverable m3u8 download err, aborting, url: %s", curUrl)
 			}
 			if !isAlt {
 				d.downloadErr.Flush()
@@ -558,9 +532,9 @@ func (d *HLSDownloader) Worker() {
 			<-ticker.C // avoid busy loop
 		} else {
 			select {
-			case _ = <-ticker.C:
+			case <-ticker.C:
 
-			case _ = <-d.forceRefreshChan:
+			case <-d.forceRefreshChan:
 				d.Logger.Info("Got forceRefresh signal, refresh at once!")
 				isClose := false
 				func() {
@@ -595,11 +569,11 @@ func (d *HLSDownloader) Worker() {
 			alt := d.AltAsMain
 
 			// check if we have error or need abort
-			needAbort, err, infoJson := updateInfo(d.Video, "", d.Cookie, alt)
+			needAbort, infoJson, err := updateInfo(d.Video, "", d.Cookie, alt)
 			if needAbort {
 				d.Logger.WithError(err).Warnf("Streamlink requests to abort, worker finishing...")
 				// if we have entered live
-				d.sendErr(fmt.Errorf("Streamlink requests to abort: %s", err))
+				d.sendErr(fmt.Errorf("streamlink requests to abort: %s", err))
 				return
 			}
 			if err != nil {
@@ -664,13 +638,13 @@ func (d *HLSDownloader) Writer() {
 						timer := time.NewTimer(15 * time.Second)
 						select {
 						case <-timeoutChan:
-							d.Logger.Debugf("Wrote segment %d in %s", segNo, time.Now().Sub(startTime))
+							d.Logger.Debugf("Wrote segment %d in %s", segNo, time.Since(startTime))
 						case <-timer.C:
 							d.Logger.Warnf("Write segment %d too slow...", curSeq)
 							timer2 := time.NewTimer(60 * time.Second)
 							select {
 							case <-timeoutChan:
-								d.Logger.Debugf("Wrote segment %d in %s", segNo, time.Now().Sub(startTime))
+								d.Logger.Debugf("Wrote segment %d in %s", segNo, time.Since(startTime))
 							case <-timer2.C:
 								d.Logger.Errorf("Write segment %d timeout!!!!!!!", curSeq)
 							}
@@ -692,7 +666,7 @@ func (d *HLSDownloader) Writer() {
 				// segment is not loaded
 				if d.lastSeqNo > 3 && d.lastSeqNo+2 < curSeq { // seqNo got reset to 0
 					// exit ASAP so that alt stream will be preserved
-					d.sendErr(fmt.Errorf("Failed to load segment %d due to segNo got reset to %d", curSeq, d.lastSeqNo))
+					d.sendErr(fmt.Errorf("failed to load segment %d due to segNo got reset to %d", curSeq, d.lastSeqNo))
 					return
 				} else {
 					// detect if we are lagged (e.g. we are currently at seg2, still waiting for seg3 to appear, however seg4 5 6 7 has already been downloaded)
@@ -707,7 +681,7 @@ func (d *HLSDownloader) Writer() {
 						}
 					})
 					if isLagged && loadTime > 15*time.Second { // exit ASAP so that alt stream will be preserved
-						d.sendErr(fmt.Errorf("Failed to load segment %d within m3u8 timeout due to lag...", curSeq))
+						d.sendErr(fmt.Errorf("failed to load segment %d within m3u8 timeout due to lag", curSeq))
 						return
 					}
 				}
@@ -719,7 +693,7 @@ func (d *HLSDownloader) Writer() {
 				go d.AltSegDownloader() // trigger alt download in advance, so we can avoid more loss
 			}
 			if loadTime > 5*time.Minute { // segNo shouldn't return to 0 within 5 min
-				d.sendErr(fmt.Errorf("Failed to load segment %d within timeout...", curSeq))
+				d.sendErr(fmt.Errorf("failed to load segment %d within timeout", curSeq))
 				return
 			}
 			if curSeq == d.FinishSeq { // successfully finished
@@ -762,7 +736,7 @@ func (d *HLSDownloader) startDownload() error {
 	}
 
 	if !d.hasAlt && d.AltAsMain {
-		return fmt.Errorf("Current live does not have alt source")
+		return fmt.Errorf("current live does not have alt source")
 	}
 
 	if IsStub {
@@ -798,7 +772,7 @@ func (d *HLSDownloader) startDownload() error {
 
 	startTime := time.Now()
 	err = <-d.errChan
-	usedTime := time.Now().Sub(startTime)
+	usedTime := time.Since(startTime)
 	if err == nil {
 		d.Logger.Infof("HLS Download successfully!")
 		d.AltStopped = true

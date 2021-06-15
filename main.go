@@ -70,17 +70,17 @@ func arrangeTask() {
 		changed := make([]string, 0, 128)
 		mods = make([]config.ModuleConfig, len(config.Config.Module))
 		copy(mods, config.Config.Module)
-		for mod_i, module := range mods {
+		for mod, module := range mods {
 			if module.Enable {
 				for _, usersConfig := range module.Users {
 					identifier := fmt.Sprintf("\"%s-%s\"", usersConfig.Name, usersConfig.TargetId)
 					statusMx.Lock()
-					if status[mod_i][identifier] != false {
+					if status[mod][identifier] {
 						living = append(living, fmt.Sprintf("\"%s-%s\"", usersConfig.Name, usersConfig.TargetId))
 						statusMx.Unlock()
 						continue
 					}
-					status[mod_i][identifier] = true
+					status[mod][identifier] = true
 					statusMx.Unlock()
 					changed = append(changed, identifier)
 					go func(i int, j string, mon monitor.VideoMonitor, userCon config.UsersConfig) {
@@ -88,7 +88,7 @@ func arrangeTask() {
 						statusMx.Lock()
 						status[i][j] = false
 						statusMx.Unlock()
-					}(mod_i, identifier, monitor.CreateVideoMonitor(module), usersConfig)
+					}(mod, identifier, monitor.CreateVideoMonitor(module), usersConfig)
 					time.Sleep(time.Millisecond * 20)
 				}
 			}

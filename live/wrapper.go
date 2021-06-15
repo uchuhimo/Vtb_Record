@@ -22,7 +22,6 @@ func StartMonitor(mon base.VideoMonitor, usersConfig config.UsersConfig, pm vide
 	}
 
 	videoworker.StartProcessVideo(fun, mon, pm)
-	return
 	//<-ticker.C
 	//}
 }

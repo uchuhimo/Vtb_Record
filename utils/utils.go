@@ -94,7 +94,7 @@ func HttpDoWithBufferEx(ctx context.Context, client *http.Client, meth string, u
 			return nil, err
 		}
 		if n != res.ContentLength {
-			return nil, fmt.Errorf("Got unexpected payload: expected: %v, got %v", res.ContentLength, n)
+			return nil, fmt.Errorf("got unexpected payload: expected: %v, got %v", res.ContentLength, n)
 		}
 		//htmlBody = buf.Bytes()
 	} else {
@@ -230,6 +230,4 @@ func GenRandBuf(p []byte) (n int, err error) {
 			val >>= 8
 		}
 	}
-
-	panic("unreachable")
 }

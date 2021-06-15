@@ -6,7 +6,7 @@ import (
 	"github.com/fzxiao233/Vtb_Record/config"
 	"github.com/fzxiao233/Vtb_Record/live/interfaces"
 	"github.com/fzxiao233/Vtb_Record/live/monitor/base"
-	. "github.com/fzxiao233/Vtb_Record/utils"
+	"github.com/fzxiao233/Vtb_Record/utils"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"strconv"
@@ -30,81 +30,6 @@ type BilibiliPoller struct {
 
 var Poller BilibiliPoller
 
-func (b *BilibiliPoller) getStatusUseFollow() error {
-	ctx := base.GetCtx("Bilibili")
-	if ctx == nil {
-		return nil
-	}
-
-	url := ctx.ApiHostUrl
-	if url == "" {
-		url = "https://api.live.bilibili.com"
-	}
-
-	livingUids := make(map[int]base.LiveInfo)
-	retrivePage := func(page int) (bool, error) {
-		rawInfoJSON, err := ctx.HttpGet(
-			fmt.Sprintf("%s/xlive/web-ucenter/user/following?page=%d&page_size=10", url, page),
-			map[string]string{},
-		)
-		if err != nil {
-			return false, err
-		}
-		infoJson, _ := simplejson.NewJson(rawInfoJSON)
-		data := infoJson.Get("data")
-		users := data.Get("list")
-		usersLen := len(users.MustArray())
-		ending := false
-		for i := 0; i < usersLen; i++ {
-			user := users.GetIndex(i)
-			if user.Get("live_status").MustInt() != 1 {
-				ending = true
-				break
-			}
-			liveUrl := fmt.Sprintf("https://live.bilibili.com/%d", user.Get("roomid").MustInt())
-			livingUids[user.Get("uid").MustInt()] = base.LiveInfo{
-				Title:         user.Get("title").MustString(),
-				StreamingLink: liveUrl,
-			}
-		}
-		//log.Debugf("Got ret living data %s", users.MustArray())
-		return ending, nil
-	}
-	for i := 0; ; i++ {
-		ending, err := retrivePage(i)
-		if err != nil {
-			return err
-		}
-		if ending {
-			break
-		}
-	}
-
-	b.LivingUids = livingUids
-
-	/*
-		rawInfoJSON, err := ctx.HttpGet(
-			"https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/w_live_users?size=10000",
-			map[string]string{},
-			)
-		if err != nil {
-			return err
-		}
-		infoJson, _ := simplejson.NewJson(rawInfoJSON)
-		b.LivingUids = make(map[int]string, infoJson.Get("data").Get("count").MustInt())
-		arr := infoJson.Get("data").Get("items").MustArray()
-		log.Infof("Got ret living data %s", arr)
-		if arr == nil || len(arr) == 0 {
-			log.Warnf("Bilibili Server Error when querying rooms!")
-		}
-		for _, _user := range arr {
-			user := _user.(map[string]interface{})
-			b.LivingUids[user["uid"].(int)] = user["link"].(string)
-	 	}*/
-	log.Tracef("Parsed uids: %v", b.LivingUids)
-	return nil
-}
-
 func (b *BilibiliPoller) getStatusUseBatch() error {
 	ctx := base.GetCtx("Bilibili")
 	url := ctx.ApiHostUrl
@@ -122,7 +47,7 @@ func (b *BilibiliPoller) getStatusUseBatch() error {
 	for i := 0; i < len(allUids); i += 200 {
 		payload := fmt.Sprintf("%s/room/v1/Room/get_status_info_by_uids?uids[]=%s",
 			url,
-			strings.Join(allUids[i:Min(i+200, len(allUids))], "&uids[]="))
+			strings.Join(allUids[i:utils.Min(i+200, len(allUids))], "&uids[]="))
 		rawInfoJSON, err := ctx.HttpGet(payload, map[string]string{})
 		if err != nil {
 			return err
@@ -130,7 +55,7 @@ func (b *BilibiliPoller) getStatusUseBatch() error {
 		infoJson, _ := simplejson.NewJson(rawInfoJSON)
 		users := infoJson.Get("data")
 		userMap := users.MustMap()
-		for uid, _ := range userMap {
+		for uid := range userMap {
 			user := users.Get(uid)
 			if user.Get("live_status").MustInt() == 1 {
 				liveUrl := fmt.Sprintf("https://live.bilibili.com/%d", user.Get("room_id").MustInt())
@@ -226,7 +151,7 @@ func (b *Bilibili) getVideoInfoByRoom() error {
 func (b *Bilibili) CreateVideo(usersConfig config.UsersConfig) *interfaces.VideoInfo {
 	v := &interfaces.VideoInfo{
 		Title:       b.Title,
-		Date:        GetTimeNow(),
+		Date:        utils.GetTimeNow(),
 		Target:      b.streamingLink,
 		Provider:    "Bilibili",
 		UsersConfig: usersConfig,

@@ -5,7 +5,7 @@ import (
 	"github.com/fzxiao233/Vtb_Record/config"
 	"github.com/fzxiao233/Vtb_Record/live/interfaces"
 	"github.com/fzxiao233/Vtb_Record/live/monitor/base"
-	. "github.com/fzxiao233/Vtb_Record/utils"
+	"github.com/fzxiao233/Vtb_Record/utils"
 	"github.com/tidwall/gjson"
 	"regexp"
 )
@@ -54,7 +54,7 @@ func (y *Youtube) CreateVideo(usersConfig config.UsersConfig) *interfaces.VideoI
 	}
 	v := &interfaces.VideoInfo{
 		Title:       y.Title,
-		Date:        GetTimeNow(),
+		Date:        utils.GetTimeNow(),
 		Target:      y.Target,
 		Provider:    "Youtube",
 		UsersConfig: usersConfig,

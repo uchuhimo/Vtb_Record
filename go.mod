@@ -21,7 +21,6 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tidwall/gjson v1.6.0
 	github.com/tidwall/pretty v1.0.1 // indirect
-	github.com/valyala/bytebufferpool v1.0.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.uber.org/multierr v1.6.0 // indirect

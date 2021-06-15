@@ -6,7 +6,7 @@ import (
 	"github.com/fzxiao233/Vtb_Record/config"
 	"github.com/fzxiao233/Vtb_Record/live/interfaces"
 	"github.com/fzxiao233/Vtb_Record/live/monitor/base"
-	. "github.com/fzxiao233/Vtb_Record/utils"
+	"github.com/fzxiao233/Vtb_Record/utils"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	"strconv"
@@ -48,7 +48,7 @@ func (t *Twitcasting) CreateVideo(usersConfig config.UsersConfig) *interfaces.Vi
 	videoTitle := t.TargetId + "#" + t.Vid
 	v := &interfaces.VideoInfo{
 		Title:       videoTitle,
-		Date:        GetTimeNow(),
+		Date:        utils.GetTimeNow(),
 		Target:      t.StreamingLink,
 		Provider:    "Twitcasting",
 		UsersConfig: usersConfig,

@@ -194,9 +194,9 @@ func (p *ProcessVideo) keepLiveAlive() {
 	defer ticker.Stop()
 	for {
 		select {
-		case _ = <-ticker.C:
+		case <-ticker.C:
 			//logger.Info("Refreshing live status...")
-		case _ = <-p.triggerChan:
+		case <-p.triggerChan:
 			logger.Info("Got emergency triggerChan signal, refresh at once!")
 		}
 		if p.isNewLive() {
@@ -221,10 +221,10 @@ func (p *ProcessVideo) appendTitleHistory(title string) {
 func (p *ProcessVideo) isNewLive() bool {
 	newLiveStatus := p.LiveTrace(p.Monitor)
 	logger := p.getLogger()
-	if newLiveStatus.IsLive == false || p.LiveStatus.IsLive == false {
+	if !newLiveStatus.IsLive || !p.LiveStatus.IsLive {
 		logger.Infof("[isNewLive] live offline")
 		return true
-	} else if p.LiveStatus.IsLive == true && p.LiveStatus.Video.Target != newLiveStatus.Video.Target {
+	} else if p.LiveStatus.IsLive && p.LiveStatus.Video.Target != newLiveStatus.Video.Target {
 		logger.Infof("[isNewLive] is new live")
 		return true
 	} else {
