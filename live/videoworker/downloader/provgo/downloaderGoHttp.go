@@ -34,6 +34,7 @@ func doDownloadHttp(entry *log.Entry, output string, httpURL string, headers map
 		if err != nil {
 			return err
 		}
+		entry.Debugf("use proxy %s for %s", proxy, httpURL)
 		transport.Proxy = http.ProxyURL(proxyURL)
 	}
 
