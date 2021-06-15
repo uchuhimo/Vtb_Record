@@ -7,9 +7,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"net/url"
 )
 
-func doDownloadHttp(entry *log.Entry, output string, url string, headers map[string]string, needMove bool) error {
+func doDownloadHttp(entry *log.Entry, output string, httpURL string, headers map[string]string, needMove bool, proxy string) error {
 	// Create the file
 	/*out, err := os.Create(output)
 	if err != nil {
@@ -28,12 +29,19 @@ func doDownloadHttp(entry *log.Entry, output string, url string, headers map[str
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+	if proxy != "" {
+		proxyURL, err := url.Parse("http://"+proxy)
+		if err != nil {
+			return err
+		}
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
 
 	client := &http.Client{
 		Transport: transport,
 	}
 	// Get the data
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", httpURL, nil)
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}

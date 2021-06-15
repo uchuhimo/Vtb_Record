@@ -805,18 +805,26 @@ func (d *HLSDownloader) startDownload() error {
 }
 
 // initialize the go hls downloader
-func (dd *DownloaderGo) doDownloadHls(entry *log.Entry, output string, video *interfaces.VideoInfo, m3u8url string, headers map[string]string, needMove bool) error {
+func (dd *DownloaderGo) doDownloadHls(entry *log.Entry, output string, video *interfaces.VideoInfo, m3u8url string, headers map[string]string, needMove bool, proxy string) error {
+	transport := &http.Transport{
+		ResponseHeaderTimeout: 20 * time.Second,
+		TLSNextProto:          make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+		//DisableCompression:    true,
+		DisableKeepAlives: false,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		DialContext:       http.DefaultTransport.(*http.Transport).DialContext,
+		DialTLS:           http.DefaultTransport.(*http.Transport).DialTLS,
+	}
+	if proxy != "" {
+		proxyURL, err := url.Parse("http://"+proxy)
+		if err != nil {
+			return err
+		}
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
 	clients := []*http.Client{
 		{
-			Transport: &http.Transport{
-				ResponseHeaderTimeout: 20 * time.Second,
-				TLSNextProto:          make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
-				//DisableCompression:    true,
-				DisableKeepAlives: false,
-				TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
-				DialContext:       http.DefaultTransport.(*http.Transport).DialContext,
-				DialTLS:           http.DefaultTransport.(*http.Transport).DialTLS,
-			},
+			Transport: transport,
 			Timeout: 60 * time.Second,
 		},
 	}

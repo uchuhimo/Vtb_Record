@@ -167,7 +167,7 @@ func (d *DownloaderGo) StartDownload(video *interfaces.VideoInfo, proxy string, 
 				needMove := false
 				if streamtype == "http" {
 					logger.Infof("start to download httpstream %s", url)
-					return doDownloadHttp(logger, filepath, url, headers, needMove)
+					return doDownloadHttp(logger, filepath, url, headers, needMove, proxy)
 				} else {
 					if strings.Contains(url, "gotcha103") {
 						//fuck qiniu
@@ -176,7 +176,7 @@ func (d *DownloaderGo) StartDownload(video *interfaces.VideoInfo, proxy string, 
 						//continue
 					}
 					logger.Infof("start to download hls stream %s", url)
-					return d.doDownloadHls(logger, filepath, video, url, headers, needMove)
+					return d.doDownloadHls(logger, filepath, video, url, headers, needMove, proxy)
 				}
 			} else {
 				return fmt.Errorf("unknown stream type: %s", streamtype)
